@@ -1,4 +1,6 @@
 .DS_Store
+Data/maildir
+Data/enron_mail_20150507.tar.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
