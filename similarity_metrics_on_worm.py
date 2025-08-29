@@ -1,16 +1,16 @@
 # %%
 import os
 from dotenv import load_dotenv
-import evaluate
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.schema import Document
-from langchain_community.vectorstores import FAISS
-import random
-from tqdm import tqdm
 import json
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 import consts
+import utils
+
+from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 
 # %%
 load_dotenv()
@@ -38,67 +38,7 @@ print(len(vectorized_worm))
 
 # %%
 
-def get_metrics(all_vectorized_worms, sample_size=50):
-    
-    N = len(all_vectorized_worms)
-    bleu = evaluate.load("bleu")
-    meteor = evaluate.load('meteor')
-    rouge = evaluate.load('rouge')
-
-    Benign_metrics = {"BLEU": [], 'METEOR': [], 'ROUGE': []}
-    Worm_metrics = {"BLEU": [], 'METEOR': [], 'ROUGE': []}
-
-    # random.seed(42)
-    random_indices = [i for i in range(N)]
-    random.shuffle(random_indices)
-    # random_indices = random_indices[:sample_size]
-
-    for i in tqdm(range(sample_size)):
-        idx = random_indices[i]
-        
-        wormed_response = all_vectorized_worms[idx].page_content
-        worm_seed = [consts.PREFIX + consts.WORM]
-        
-        references = [wormed_response for _ in range(N - 1)]
-        predictions = [all_vectorized_worms[j].page_content 
-                       for j in range(N) if j != idx]
-        
-        # metric 1
-        bleu_benign = bleu.compute(predictions=predictions, 
-                                   references=references)['bleu']
-        Benign_metrics['BLEU'].append(bleu_benign)
-        Worm_metrics['BLEU'].append(
-            bleu.compute(predictions=[wormed_response], 
-                         references=worm_seed)['bleu']
-        )
-
-        # metric 2
-        meteor_benign = meteor.compute(predictions=predictions, 
-                                    references=references)['meteor']
-        Benign_metrics['METEOR'].append(meteor_benign)
-        Worm_metrics['METEOR'].append(
-            meteor.compute(predictions=[wormed_response], 
-                        references=worm_seed)['meteor']
-        )
-
-        # metric 3
-        rouge_benign = rouge.compute(predictions=predictions, 
-                                    references=references)['rougeL']
-        Benign_metrics['ROUGE'].append(rouge_benign)
-        Worm_metrics['ROUGE'].append(
-            rouge.compute(predictions=[wormed_response], 
-                        references=worm_seed)['rougeL']
-        )
-    # end for loop
-
-    dir = 'Results/imilarity metrics on worm and rag docs/'
-    with open(dir + 'benign_metrics.json', 'w') as file:
-        json.dump(Benign_metrics, file)
-
-    with open(dir + 'worm_metrics.json', 'w') as file:
-        json.dump(Worm_metrics, file)
-
-# get_metrics(all_vectorized_worms, sample_size=50)
+# utils.get_metrics(all_vectorized_worms, consts.WORM, sample_size=50)
 
 # %%
 
